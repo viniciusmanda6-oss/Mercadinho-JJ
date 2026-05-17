@@ -35,6 +35,7 @@ if botao_adicionar and nome:
         'PRODUTO': nome.upper(),
         'CUSTO UN.': f"R$ {custo_un:.2f}",
         'VENDA UN.': f"R$ {venda_un:.2f}",
+        'LUCRO UN.': f"R$ {lucro_un:.2f}",
         'LUCRO TOTAL': f"R$ {lucro_total_produto:.2f}",
         'custo_raw': custo_pacote,          # guardado para a soma final
         'lucro_raw': lucro_total_produto     # guardado para a soma final
@@ -45,8 +46,11 @@ if botao_adicionar and nome:
 if st.session_state.lista_produtos:
     st.write("### 📊 Tabela de Produtos")
     
-    # Exibe os dados em formato de tabela web
-    st.dataframe(st.session_state.lista_produtos, column_order=['PRODUTO', 'CUSTO UN.', 'VENDA UN.', 'LUCRO TOTAL'])
+    # Exibe os dados em formato de tabela web com a nova coluna de Lucro Unitário
+    st.dataframe(
+        st.session_state.lista_produtos, 
+        column_order=['PRODUTO', 'CUSTO UN.', 'VENDA UN.', 'LUCRO UN.', 'LUCRO TOTAL']
+    )
     
     # Calcula os totais acumulados
     investimento_geral = sum(p['custo_raw'] for p in st.session_state.lista_produtos)
@@ -56,8 +60,28 @@ if st.session_state.lista_produtos:
     col_tot1, col_tot2 = st.columns(2)
     col_tot1.metric(label="INVESTIMENTO TOTAL", value=f"R$ {investimento_geral:.2f}")
     col_tot2.metric(label="LUCRO TOTAL ACUMULADO", value=f"R$ {lucro_geral:.2f}")
-
-    # Botão para limpar o sistema se quiser começar de novo
-    if st.button("Limpar Tudo"):
-        st.session_state.lista_produtos = []
-        st.rerun()
+    
+    st.markdown("---")
+    
+    # --- LÓGICA DO BOTÃO DE COPIAR TUDO ---
+    # Criando o texto formatado para o WhatsApp ou Bloco de Notas
+    texto_copiar = "📋 *RELATÓRIO DE FLUXO DE CAIXA*\n\n"
+    for p in st.session_state.lista_produtos:
+        texto_copiar += f"🔹 *{p['PRODUTO']}*\n"
+        texto_copiar += f"  - Custo Un: {p['CUSTO UN.']}\n"
+        texto_copiar += f"  - Venda Un: {p['VENDA UN.']}\n"
+        texto_copiar += f"  - Lucro Un: {p['LUCRO UN.']}\n"
+        texto_copiar += f"  - Lucro Lote: {p['LUCRO TOTAL']}\n\n"
+    
+    texto_copiar += f"💰 *INVESTIMENTO TOTAL:* R$ {investimento_geral:.2f}\n"
+    texto_copiar += f"📈 *LUCRO TOTAL ACUMULADO:* R$ {lucro_geral:.2f}"
+    
+    # Botões de ação lado a lado (Copiar e Limpar)
+    col_btn1, col_btn2 = st.columns(2)
+    with col_btn1:
+        st.copy_to_clipboard(texto_copiar, text="📋 Copiar Relatório")
+    with col_btn2:
+        if st.button("🗑️ Limpar Tudo"):
+            st.session_state.lista_produtos = []
+            st.rerun()
+            
